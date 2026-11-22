@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-shapes me-2"></i>Shape Sorting Game</h4>
+            </div>
+            <div class="card-body">
+                <div class="game-container">
+                    <div class="game-stats text-center mb-4">
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="stat-item">
+                                    <h3 id="scoreDisplay">0</h3>
+                                    <small>Score</small>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="stat-item">
+                                    <h3 id="levelDisplay">1</h3>
+                                    <small>Level</small>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="stat-item">
+                                    <h3 id="livesDisplay">3</h3>
+                                    <small>Lives</small>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="stat-item">
+                                    <h3 id="shapesDisplay">0/5</h3>
+                                    <small>Progress</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-area bg-light rounded p-4 mb-4">
+                        <div class="current-shape-section text-center mb-4">
+                            <h5>Current Shape</h5>
+                            <div id="currentShape" class="shape-display mx-auto">
+                                {% if shape_game_status.game_state.current_shape %}
+                                <div class="shape {{ shape_game_status.game_state.current_shape }} large"></div>
+                                {% else %}
+                                <div class="shape-placeholder">No shape selected</div>
+                                {% endif %}
+                            </div>
+                            <div id="instructionText" class="instruction-text mt-2">
+                                {% if shape_game_status.game_state.target_bin %}
+                                Take this to the <strong>{{ shape_game_status.game_state.target_bin }}</strong> bin
+                                {% else %}
+                                Start the game to begin!
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="cursor-section text-center mb-4">
+                            <div class="cursor" id="gameCursor"
+                                 style="left: {{ shape_game_status.game_state.cursor_position[0] }}px; top: {{ shape_game_status.game_state.cursor_position[1] }}px;">
+                                <i class="fas fa-mouse-pointer"></i>
+                            </div>
+                            <small class="text-muted">Cursor Position</small>
+                        </div>
+                        
+                        <div class="bins-section">
+                            <h5 class="text-center mb-3">Sorting Bins</h5>
+                            <div class="row text-center">
+                                <div class="col-3">
+                                    <div class="bin circle-bin" data-bin="circle" onclick="sortShape('circle')">
+                                        <div class="shape circle"></div>
+                                        <div class="bin-label">Circle</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="bin square-bin" data-bin="square" onclick="sortShape('square')">
+                                        <div class="shape square"></div>
+                                        <div class="bin-label">Square</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="bin triangle-bin" data-bin="triangle" onclick="sortShape('triangle')">
+                                        <div class="shape triangle"></div>
+                                        <div class="bin-label">Triangle</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="bin rectangle-bin" data-bin="rectangle" onclick="sortShape('rectangle')">
+                                        <div class="shape rectangle"></div>
+                                        <div class="bin-label">Rectangle</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-controls text-center">
+                        <button class="btn btn-success btn-lg me-2" id="startBtn" 
+                                {% if shape_game_status.game_state.game_active %}disabled{% endif %}>
+                            <i class="fas fa-play me-2"></i>Start Game
+                        </button>
+                        <button class="btn btn-info btn-lg me-2" id="speakBtn">
+                            <i class="fas fa-volume-up me-2"></i>Repeat Instruction
+                        </button>
+                        <button class="btn btn-secondary btn-lg" id="helpBtn">
+                            <i class="fas fa-question-circle me-2"></i>Help
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Game Information</h5>
+            </div>
+            <div class="card-body">
+                <div id="gameInfo">
+                    {% if shape_game_status.game_state.game_active %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-gamepad me-2"></i>
+                        Game is active! Sort shapes to earn points.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Click "Start Game" to begin shape sorting!
+                    </div>
+                    {% endif %}
+                    
+                    <div class="level-info">
+                        <h6>Level Features:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-star text-warning me-2"></i>Level 1-2: Auto-assist cursor</li>
+                            <li><i class="fas fa-star text-warning me-2"></i>Level 3+: Manual cursor control</li>
+                            <li><i class="fas fa-star text-warning me-2"></i>Higher levels = More points</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-shapes me-2"></i>Shape Guide</h5>
+            </div>
+            <div class="card-body">
+                <div class="shape-guide">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="shape circle guide-shape"></div>
+                            <small>Circle</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="shape square guide-shape"></div>
+                            <small>Square</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="shape triangle guide-shape"></div>
+                            <small>Triangle</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="shape rectangle guide-shape"></div>
+                            <small>Rectangle</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Learning Objectives</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Shape recognition skills
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Hand-eye coordination
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Problem solving abilities
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Following instructions
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Cognitive development
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Game Activity Log</h5>
+            </div>
+            <div class="card-body">
+                <div id="gameLog" class="game-log" style="max-height: 200px; overflow-y: auto;">
+                    <div class="log-entry text-muted">No game activity yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let gameLog = [];
+
+function updateGameStatus() {
+    fetch('/shape_game_status')
+        .then(response => response.json())
+        .then(data => {
+            const gameState = data.game_state;
+            
+            // Update game stats
+            document.getElementById('scoreDisplay').textContent = gameState.score || 0;
+            document.getElementById('levelDisplay').textContent = gameState.level || 1;
+            document.getElementById('livesDisplay').textContent = gameState.lives || 3;
+            document.getElementById('shapesDisplay').textContent = `${gameState.shapes_collected || 0}/5`;
+            
+            // Update current shape
+            const currentShapeElement = document.getElementById('currentShape');
+            if (gameState.current_shape) {
+                currentShapeElement.innerHTML = `<div class="shape ${gameState.current_shape} large"></div>`;
+            } else {
+                currentShapeElement.innerHTML = '<div class="shape-placeholder">No shape selected</div>';
+            }
+            
+            // Update instruction
+            const instructionElement = document.getElementById('instructionText');
+            if (gameState.target_bin) {
+                instructionElement.innerHTML = `Take this to the <strong>${gameState.target_bin}</strong> bin`;
+            }
+            
+            // Update cursor position
+            const cursorElement = document.getElementById('gameCursor');
+            if (gameState.cursor_position) {
+                cursorElement.style.left = gameState.cursor_position[0] + 'px';
+                cursorElement.style.top = gameState.cursor_position[1] + 'px';
+            }
+            
+            // Update game controls
+            const startBtn = document.getElementById('startBtn');
+            if (gameState.game_active) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<i class="fas fa-play me-2"></i>Game Active';
+            } else {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-play me-2"></i>Start Game';
+            }
+            
+            // Update game info
+            const gameInfoElement = document.getElementById('gameInfo');
+            if (gameState.game_active) {
+                gameInfoElement.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-gamepad me-2"></i>
+                        Game is active! Level ${gameState.level}, Score: ${gameState.score}
+                    </div>
+                    <div class="level-info">
+                        <h6>Current Level:</h6>
+                        <p>${gameState.auto_move ? 'Auto-assist mode' : 'Manual mode'}</p>
+                    </div>
+                `;
+            }
+            
+            // Update activity log
+            if (data.last_action) {
+                addToGameLog(data.last_action);
+            }
+        })
+        .catch(error => console.error('Error fetching game status:', error));
+}
+
+function sortShape(binName) {
+    fetch(`/sort_shape/${binName}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateGameStatus();
+            } else {
+                alert('Error sorting shape: ' + data.error);
+            }
+        })
+        .catch(error => console.error('Error sorting shape:', error));
+}
+
+function addToGameLog(action) {
+    const log = document.getElementById('gameLog');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    let message = '';
+    switch (action.type) {
+        case 'game_started':
+            message = `Game started - Level ${action.level}`;
+            break;
+        case 'new_shape':
+            message = `New shape: ${action.shape} → ${action.target_bin}`;
+            break;
+        case 'correct_sort':
+            message = `✓ Correct! +${action.score} points`;
+            break;
+        case 'incorrect_sort':
+            message = `✗ Wrong! ${action.shape} should go in ${action.correct_bin}`;
+            break;
+        case 'level_up':
+            message = `🎉 Level up! Now level ${action.level}`;
+            break;
+        case 'game_over':
+            message = `Game over! Final score: ${action.final_score}`;
+            break;
+    }
+    
+    if (message) {
+        gameLog.unshift(`[${timestamp}] ${message}`);
+        if (gameLog.length > 10) gameLog.pop();
+        
+        log.innerHTML = gameLog.map(entry => 
+            `<div class="log-entry">${entry}</div>`
+        ).join('');
+    }
+}
+
+// Event listeners
+document.getElementById('startBtn').addEventListener('click', function() {
+    window.location.href = '/start_shape_game';
+});
+
+document.getElementById('speakBtn').addEventListener('click', function() {
+    const instruction = document.getElementById('instructionText').textContent;
+    // This would trigger TTS - implementation depends on your backend
+    fetch('/textspeech', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: instruction})
+    });
+});
+
+document.getElementById('helpBtn').addEventListener('click', function() {
+    alert('How to play:\n\n1. Click "Start Game" to begin\n2. Look at the current shape\n3. Click the correct bin for that shape\n4. Earn points for correct answers\n5. Level up after 5 correct sorts!');
+});
+
+// Update game status every second
+setInterval(updateGameStatus, 1000);
+
+// Initial update
+updateGameStatus();
+</script>
+
+<style>
+.game-area {
+    position: relative;
+    min-height: 400px;
+    border: 3px solid #dee2e6;
+}
+
+.shape {
+    display: inline-block;
+    margin: 10px;
+}
+
+.shape.circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #dc3545;
+}
+
+.shape.square {
+    width: 60px;
+    height: 60px;
+    background-color: #28a745;
+}
+
+.shape.triangle {
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 60px solid #007bff;
+    background-color: transparent;
+}
+
+.shape.rectangle {
+    width: 80px;
+    height: 40px;
+    background-color: #ffc107;
+}
+
+.shape.large {
+    transform: scale(1.5);
+}
+
+.guide-shape {
+    margin: 5px;
+}
+
+.bin {
+    padding: 20px;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.bin:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+}
+
+.bin-label {
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.cursor {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s ease;
+    z-index: 1000;
+}
+
+.cursor-section {
+    position: relative;
+    height: 100px;
+    border: 1px dashed #ccc;
+    border-radius: 5px;
+}
+
+.stat-item {
+    padding: 10px;
+}
+
+.stat-item h3 {
+    margin: 0;
+    color: #007bff;
+}
+
+.instruction-text {
+    font-size: 1.1rem;
+    color: #495057;
+}
+
+.shape-placeholder {
+    padding: 30px;
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    color: #6c757d;
+}
+
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.circle-bin:hover { border-color: #dc3545; }
+.square-bin:hover { border-color: #28a745; }
+.triangle-bin:hover { border-color: #007bff; }
+.rectangle-bin:hover { border-color: #ffc107; }
+</style>
+{% endblock %}

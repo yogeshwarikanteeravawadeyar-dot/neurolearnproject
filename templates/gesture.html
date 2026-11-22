@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-hands me-2"></i>Gesture Recognition - ASL to Voice</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="camera-feed mb-4">
+                            <div class="text-center bg-dark text-light p-4 rounded">
+                                <h5>Gesture Detection</h5>
+                                <div class="status-indicator mb-3">
+                                    <div class="status-circle {% if gesture_status.is_active %}status-on{% else %}status-off{% endif %}"></div>
+                                    <p class="mt-2">Status: 
+                                        <span id="statusText">
+                                            {% if gesture_status.is_active %}ACTIVE{% else %}INACTIVE{% endif %}
+                                        </span>
+                                    </p>
+                                </div>
+                                
+                                <div class="btn-group-vertical w-100">
+                                    <button class="btn btn-success mb-2" id="startBtn" 
+                                            {% if gesture_status.is_active %}disabled{% endif %}>
+                                        <i class="fas fa-play me-2"></i>Start Detection
+                                    </button>
+                                    <button class="btn btn-danger mb-2" id="stopBtn" 
+                                            {% if not gesture_status.is_active %}disabled{% endif %}>
+                                        <i class="fas fa-stop me-2"></i>Stop Detection
+                                    </button>
+                                    <button class="btn btn-warning mb-2" id="clearBtn">
+                                        <i class="fas fa-eraser me-2"></i>Clear Word
+                                    </button>
+                                    <button class="btn btn-primary mb-2" id="speakWordBtn" 
+                                            {% if not gesture_status.current_word %}disabled{% endif %}>
+                                        <i class="fas fa-volume-up me-2"></i>Speak Word
+                                    </button>
+                                    <button class="btn btn-info" id="speakLetterBtn" 
+                                            {% if not gesture_status.current_gesture %}disabled{% endif %}>
+                                        <i class="fas fa-volume-down me-2"></i>Speak Letter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <h4>Current Detection</h4>
+                            <div class="current-gesture mb-3">
+                                <div id="currentGesture" class="display-1 text-primary">
+                                    {{ gesture_status.current_gesture if gesture_status.current_gesture else '-' }}
+                                </div>
+                                <p class="text-muted">ASL Letter Detected</p>
+                            </div>
+                            
+                            <div class="stats">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h3 id="wordLength">{{ gesture_status.current_word|length }}</h3>
+                                        <small>Letters</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h3 id="gestureCount">{{ gesture_status.gesture_history|length }}</h3>
+                                        <small>Gestures</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="current-word mt-4">
+                    <h5>Spelled Word</h5>
+                    <div class="word-display bg-light p-3 rounded text-center">
+                        <div id="currentWord" class="h2 mb-0" style="font-family: monospace; letter-spacing: 5px;">
+                            {{ gesture_status.current_word if gesture_status.current_word else 'Spell a word using ASL...' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Gestures</h5>
+            </div>
+            <div class="card-body">
+                <div id="gestureHistory" class="gesture-history" style="max-height: 200px; overflow-y: auto;">
+                    {% for gesture in gesture_status.gesture_history %}
+                    <span class="badge bg-primary me-1 mb-1">{{ gesture }}</span>
+                    {% else %}
+                    <p class="text-muted mb-0">No gestures detected yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>ASL Alphabet Guide</h5>
+            </div>
+            <div class="card-body">
+                <div class="asl-alphabet">
+                    <div class="row text-center">
+                        {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+                        <div class="col-3 col-md-2 mb-2">
+                            <div class="asl-letter bg-light rounded p-1">
+                                <div class="h6 mb-0">{{ letter }}</div>
+                                <small class="text-muted">ASL</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Tips for Best Results</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Use good lighting
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Show one hand at a time
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Keep hand visible and steady
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Use clear ASL letters
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Pause between gestures
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Activity Log</h5>
+            </div>
+            <div class="card-body">
+                <div id="activityLog" class="activity-log" style="max-height: 200px; overflow-y: auto;">
+                    <div class="log-entry text-muted">No activity yet. Start gesturing to see log entries.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let activityLog = [];
+
+function updateGestureStatus() {
+    fetch('/gesture_status')
+        .then(response => response.json())
+        .then(data => {
+            // Update status indicator
+            const statusCircle = document.querySelector('.status-circle');
+            const statusText = document.getElementById('statusText');
+            
+            if (data.is_active) {
+                statusCircle.className = 'status-circle status-on';
+                statusText.textContent = 'ACTIVE';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+            } else {
+                statusCircle.className = 'status-circle status-off';
+                statusText.textContent = 'INACTIVE';
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+            
+            // Update current gesture
+            document.getElementById('currentGesture').textContent = data.current_gesture || '-';
+            
+            // Update current word
+            const currentWord = document.getElementById('currentWord');
+            if (data.current_word) {
+                currentWord.textContent = data.current_word;
+                currentWord.className = 'h2 mb-0 text-success';
+                document.getElementById('speakWordBtn').disabled = false;
+            } else {
+                currentWord.textContent = 'Spell a word using ASL...';
+                currentWord.className = 'h2 mb-0 text-muted';
+                document.getElementById('speakWordBtn').disabled = true;
+            }
+            
+            // Update letter button
+            document.getElementById('speakLetterBtn').disabled = !data.current_gesture;
+            
+            // Update counts
+            document.getElementById('wordLength').textContent = data.current_word ? data.current_word.length : 0;
+            document.getElementById('gestureCount').textContent = data.gesture_history ? data.gesture_history.length : 0;
+            
+            // Update gesture history
+            const historyContainer = document.getElementById('gestureHistory');
+            if (data.gesture_history && data.gesture_history.length > 0) {
+                historyContainer.innerHTML = data.gesture_history.map(gesture => 
+                    `<span class="badge bg-primary me-1 mb-1">${gesture}</span>`
+                ).join('');
+            }
+            
+            // Update activity log
+            if (data.last_action && data.last_action.type) {
+                addToActivityLog(data.last_action);
+            }
+        })
+        .catch(error => console.error('Error fetching gesture status:', error));
+}
+
+function addToActivityLog(action) {
+    const log = document.getElementById('activityLog');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    let message = '';
+    switch (action.type) {
+        case 'gesture_detected':
+            message = `Gesture detected: ${action.gesture}`;
+            break;
+        case 'word_spoken':
+            message = `Word spoken: ${action.word}`;
+            break;
+        case 'word_cleared':
+            message = `Word cleared`;
+            break;
+    }
+    
+    if (message) {
+        activityLog.unshift(`[${timestamp}] ${message}`);
+        if (activityLog.length > 10) activityLog.pop();
+        
+        log.innerHTML = activityLog.map(entry => 
+            `<div class="log-entry">${entry}</div>`
+        ).join('');
+    }
+}
+
+// Event listeners
+document.getElementById('startBtn').addEventListener('click', function() {
+    window.location.href = '/start_gesture';
+});
+
+document.getElementById('stopBtn').addEventListener('click', function() {
+    window.location.href = '/stop_gesture';
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+    window.location.href = '/clear_gesture_word';
+});
+
+document.getElementById('speakWordBtn').addEventListener('click', function() {
+    window.location.href = '/speak_gesture_word';
+});
+
+document.getElementById('speakLetterBtn').addEventListener('click', function() {
+    window.location.href = '/speak_gesture_letter';
+});
+
+// Update status every second
+setInterval(updateGestureStatus, 1000);
+
+// Initial update
+updateGestureStatus();
+</script>
+
+<style>
+.status-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 5px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.status-on {
+    background-color: #28a745;
+    border-color: #28a745;
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.status-off {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.word-display {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.asl-letter {
+    transition: transform 0.2s ease;
+}
+
+.asl-letter:hover {
+    transform: scale(1.1);
+}
+
+.gesture-history {
+    min-height: 100px;
+}
+
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.current-gesture {
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}

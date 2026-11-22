@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-eye me-2"></i>Eye Blink Communication Interface</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="camera-feed mb-4">
+                            <div class="text-center bg-dark text-light p-4 rounded">
+                                <h5>Eye Blink Detection</h5>
+                                <div class="status-indicator mb-3">
+                                    <div class="status-circle {% if eye_blink_status.is_active %}status-on{% else %}status-off{% endif %}"></div>
+                                    <p class="mt-2">Status: 
+                                        <span id="statusText">
+                                            {% if eye_blink_status.is_active %}ACTIVE{% else %}INACTIVE{% endif %}
+                                        </span>
+                                    </p>
+                                </div>
+                                
+                                <div class="btn-group-vertical w-100">
+                                    <button class="btn btn-success mb-2" id="startBtn" 
+                                            {% if eye_blink_status.is_active %}disabled{% endif %}>
+                                        <i class="fas fa-play me-2"></i>Start Detection
+                                    </button>
+                                    <button class="btn btn-danger mb-2" id="stopBtn" 
+                                            {% if not eye_blink_status.is_active %}disabled{% endif %}>
+                                        <i class="fas fa-stop me-2"></i>Stop Detection
+                                    </button>
+                                    <button class="btn btn-info mb-2" id="resetBtn">
+                                        <i class="fas fa-eraser me-2"></i>Reset Text
+                                    </button>
+                                    <button class="btn btn-primary" id="speakBtn" 
+                                            {% if not eye_blink_status.typed_word %}disabled{% endif %}>
+                                        <i class="fas fa-volume-up me-2"></i>Speak Text
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <h4>Current Selection</h4>
+                            <div class="current-letter mb-3">
+                                <div id="currentLetter" class="display-1 text-primary">
+
+                                </div>
+                                <p class="text-muted">Highlighted Key</p>
+                            </div>
+                            
+                            <div class="blink-counter">
+                                <h3 id="blinkCount">0</h3>
+                                <p>Blinks Detected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="virtual-keyboard mt-4">
+                    <h5>Virtual Keyboard Layout</h5>
+                    <div class="keyboard-layout bg-light p-3 rounded text-center">
+                        <div class="keyboard-row mb-2">
+                            {% for key in ['1', '2', '3', 'E'] %}
+                            <span class="key-keyboard-key badge bg-primary m-1 p-2">{{ key }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="keyboard-row mb-2">
+                            {% for key in ['4', '5', '6', 'C'] %}
+                            <span class="key-keyboard-key badge bg-primary m-1 p-2">{{ key }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="keyboard-row mb-2">
+                            {% for key in ['7', '8', '9', '0'] %}
+                            <span class="key-keyboard-key badge bg-primary m-1 p-2">{{ key }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Keys highlight sequentially. Blink when your desired key is highlighted to select it.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-keyboard me-2"></i>Typed Text</h5>
+            </div>
+            <div class="card-body">
+                <div class="output-display bg-dark text-light p-3 rounded mb-3">
+                    <div id="typedText" class="h4 mb-0" style="min-height: 100px; font-family: monospace;">
+                        {{ eye_blink_status.typed_word if eye_blink_status.typed_word else 'Type using eye blinks...' }}
+                    </div>
+                </div>
+                <div class="typing-stats">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 id="letterCount">{{ eye_blink_status.typed_word|length if eye_blink_status.typed_word else 0 }}</h5>
+                            <small>Letters</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 id="wordCount">0</h5>
+                            <small>Words</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Instructions</h5>
+            </div>
+            <div class="card-body">
+                <div class="instruction-steps">
+                    <div class="step mb-3">
+                        <span class="step-number bg-primary text-white rounded-circle d-inline-block text-center me-2" 
+                              style="width: 30px; height: 30px; line-height: 30px;">1</span>
+                        <span>Click "Start Detection" to begin</span>
+                    </div>
+                    <div class="step mb-3">
+                        <span class="step-number bg-primary text-white rounded-circle d-inline-block text-center me-2" 
+                              style="width: 30px; height: 30px; line-height: 30px;">2</span>
+                        <span>Sit facing the camera with good lighting</span>
+                    </div>
+                    <div class="step mb-3">
+                        <span class="step-number bg-primary text-white rounded-circle d-inline-block text-center me-2" 
+                              style="width: 30px; height: 30px; line-height: 30px;">3</span>
+                        <span>Watch as keys highlight sequentially</span>
+                    </div>
+                    <div class="step mb-3">
+                        <span class="step-number bg-primary text-white rounded-circle d-inline-block text-center me-2" 
+                              style="width: 30px; height: 30px; line-height: 30px;">4</span>
+                        <span>Blink when your desired key is highlighted</span>
+                    </div>
+                    <div class="step mb-3">
+                        <span class="step-number bg-primary text-white rounded-circle d-inline-block text-center me-2" 
+                              style="width: 30px; height: 30px; line-height: 30px;">5</span>
+                        <span>Use 'E' to speak text, 'C' to clear</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Activity Log</h5>
+            </div>
+            <div class="card-body">
+                <div id="activityLog" class="activity-log" style="max-height: 200px; overflow-y: auto;">
+                    <div class="log-entry text-muted">No activity yet. Start typing to see log entries.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let blinkCount = 0;
+let activityLog = [];
+
+function updateStatus() {
+    fetch('/eye_blink_status')
+        .then(response => response.json())
+        .then(data => {
+            // Update status indicator
+            const statusCircle = document.querySelector('.status-circle');
+            const statusText = document.getElementById('statusText');
+            
+            if (data.is_active) {
+                statusCircle.className = 'status-circle status-on';
+                statusText.textContent = 'ACTIVE';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+            } else {
+                statusCircle.className = 'status-circle status-off';
+                statusText.textContent = 'INACTIVE';
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+            
+            // Update current letter
+            document.getElementById('currentLetter').textContent = data.current_letter || '-';
+            
+            // Update typed text
+            const typedText = document.getElementById('typedText');
+            if (data.typed_word) {
+                typedText.textContent = data.typed_word;
+                typedText.className = 'h4 mb-0 text-success';
+                document.getElementById('speakBtn').disabled = false;
+            } else {
+                typedText.textContent = 'Type using eye blinks...';
+                typedText.className = 'h4 mb-0 text-muted';
+                document.getElementById('speakBtn').disabled = true;
+            }
+            
+            // Update counts
+            document.getElementById('letterCount').textContent = data.typed_word ? data.typed_word.length : 0;
+            document.getElementById('wordCount').textContent = data.typed_word ? data.typed_word.split(' ').length : 0;
+            
+            // Update activity log
+            if (data.last_action && data.last_action.type) {
+                addToActivityLog(data.last_action);
+            }
+        })
+        .catch(error => console.error('Error fetching status:', error));
+}
+
+function addToActivityLog(action) {
+    const log = document.getElementById('activityLog');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    let message = '';
+    switch (action.type) {
+        case 'letter_typed':
+            message = `Letter typed: ${action.letter}`;
+            break;
+        case 'word_completed':
+            message = `Word completed: ${action.word}`;
+            break;
+        case 'password_matched':
+            message = `Password matched: ${action.password}`;
+            break;
+        case 'password_failed':
+            message = `Password attempt: ${action.attempted}`;
+            break;
+    }
+    
+    if (message) {
+        activityLog.unshift(`[${timestamp}] ${message}`);
+        if (activityLog.length > 10) activityLog.pop();
+        
+        log.innerHTML = activityLog.map(entry => 
+            `<div class="log-entry">${entry}</div>`
+        ).join('');
+    }
+}
+
+// Event listeners
+document.getElementById('startBtn').addEventListener('click', function() {
+    window.location.href = '/start_eye_blink';
+});
+
+document.getElementById('stopBtn').addEventListener('click', function() {
+    window.location.href = '/stop_eye_blink';
+});
+
+document.getElementById('resetBtn').addEventListener('click', function() {
+    window.location.href = '/reset_eye_blink';
+});
+
+document.getElementById('speakBtn').addEventListener('click', function() {
+    window.location.href = '/speak_eye_blink_text';
+});
+
+// Update status every second
+setInterval(updateStatus, 1000);
+
+// Initial update
+updateStatus();
+</script>
+
+<style>
+.status-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 5px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.status-on {
+    background-color: #28a745;
+    border-color: #28a745;
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.status-off {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.key-keyboard-key {
+    font-size: 1.2rem;
+    min-width: 50px;
+    font-family: monospace;
+}
+
+.output-display {
+    min-height: 120px;
+    font-family: 'Courier New', monospace;
+}
+
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.step-number {
+    font-weight: bold;
+}
+</style>
+{% endblock %}

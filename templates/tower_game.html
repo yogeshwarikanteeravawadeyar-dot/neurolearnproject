@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-chess-rook me-2"></i>Tower of Hanoi - IQ Builder</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="game-container text-center">
+                            <div id="gameCanvas" class="game-canvas">
+                                <!-- HTML5 Canvas implementation of Tower of Hanoi -->
+                                <canvas id="hanoiCanvas" width="600" height="400"></canvas>
+                            </div>
+                            
+                            <div class="game-controls mt-3">
+                                <div class="btn-group mb-3">
+                                    <button class="btn btn-outline-primary" onclick="moveCursor('left')">
+                                        <i class="fas fa-arrow-left"></i> Left
+                                    </button>
+                                    <button class="btn btn-success" onclick="pickUpDisk()">
+                                        <i class="fas fa-arrow-up"></i> Pick Up
+                                    </button>
+                                    <button class="btn btn-warning" onclick="putDownDisk()">
+                                        <i class="fas fa-arrow-down"></i> Put Down
+                                    </button>
+                                    <button class="btn btn-outline-primary" onclick="moveCursor('right')">
+                                        Right <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="btn-group mb-3">
+                                    <button class="btn btn-info" onclick="showHint()">
+                                        <i class="fas fa-lightbulb"></i> Hint
+                                    </button>
+                                    <button class="btn btn-danger" onclick="resetGame()">
+                                        <i class="fas fa-redo"></i> Restart
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="changeDifficulty(-1)">
+                                        <i class="fas fa-minus"></i> Easier
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="changeDifficulty(1)">
+                                        <i class="fas fa-plus"></i> Harder
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="game-instructions mt-4">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-gamepad me-2"></i>How to Play:</h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><strong>Left/Right Buttons:</strong> Move between towers</li>
+                                        <li><strong>Pick Up:</strong> Lift disk from current tower</li>
+                                        <li><strong>Put Down:</strong> Place disk on current tower</li>
+                                        <li><strong>Rules:</strong> Only smaller disks can go on larger ones</li>
+                                        <li><strong>Goal:</strong> Move all disks to the rightmost tower</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="game-info-sidebar">
+                            <div class="card mb-4">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Game Stats</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="stats-display">
+                                        <div class="stat-item mb-3">
+                                            <h6>Steps Taken</h6>
+                                            <div id="stepsCount" class="h4 text-primary">0</div>
+                                        </div>
+                                        <div class="stat-item mb-3">
+                                            <h6>Disks</h6>
+                                            <div id="disksCount" class="h4 text-info">3</div>
+                                        </div>
+                                        <div class="stat-item mb-3">
+                                            <h6>Minimum Steps</h6>
+                                            <div id="minSteps" class="h4 text-warning">7</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <h6>Efficiency</h6>
+                                            <div id="efficiency" class="h4 text-success">0%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0"><i class="fas fa-brain me-2"></i>IQ Benefits</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Problem solving skills
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Logical thinking
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Planning and strategy
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Pattern recognition
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Cognitive flexibility
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Game History</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="gameHistory" class="game-history" style="max-height: 150px; overflow-y: auto;">
+                                        <div class="text-muted">Game started. Good luck!</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Learning Guide</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>What is Tower of Hanoi?</h6>
+                        <p>The Tower of Hanoi is a mathematical puzzle that consists of three rods and a number of disks of different sizes. The objective is to move the entire stack to another rod, obeying the following rules:</p>
+                        <ol>
+                            <li>Only one disk can be moved at a time</li>
+                            <li>Each move consists of taking the upper disk from one stack and placing it on another</li>
+                            <li>No disk may be placed on top of a smaller disk</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Educational Benefits</h6>
+                        <div class="benefits-list">
+                            <div class="benefit-item mb-3">
+                                <strong>Mathematical Thinking:</strong> Introduces recursive thinking and algorithm development.
+                            </div>
+                            <div class="benefit-item mb-3">
+                                <strong>Patience & Persistence:</strong> Teaches the value of careful planning and step-by-step problem solving.
+                            </div>
+                            <div class="benefit-item mb-3">
+                                <strong>Spatial Reasoning:</strong> Develops understanding of spatial relationships and movement patterns.
+                            </div>
+                            <div class="benefit-item">
+                                <strong>Memory Training:</strong> Exercises working memory through multi-step planning.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Tower of Hanoi Game Implementation
+class TowerOfHanoi {
+    constructor() {
+        this.disks = 3;
+        this.towers = [[], [], []];
+        this.selectedTower = 0;
+        this.holdingDisk = null;
+        this.steps = 0;
+        this.gameWon = false;
+        this.init();
+    }
+
+    init() {
+        // Initialize towers with disks
+        this.towers = [[], [], []];
+        for (let i = this.disks; i > 0; i--) {
+            this.towers[0].push(i);
+        }
+        this.selectedTower = 0;
+        this.holdingDisk = null;
+        this.steps = 0;
+        this.gameWon = false;
+        this.updateDisplay();
+        this.addToHistory('Game started with ' + this.disks + ' disks');
+    }
+
+    moveLeft() {
+        if (this.gameWon) return;
+        this.selectedTower = (this.selectedTower - 1 + 3) % 3;
+        this.updateDisplay();
+        this.addToHistory('Moved to tower ' + (this.selectedTower + 1));
+    }
+
+    moveRight() {
+        if (this.gameWon) return;
+        this.selectedTower = (this.selectedTower + 1) % 3;
+        this.updateDisplay();
+        this.addToHistory('Moved to tower ' + (this.selectedTower + 1));
+    }
+
+    pickUpDisk() {
+        if (this.gameWon || this.holdingDisk !== null) return;
+        
+        const tower = this.towers[this.selectedTower];
+        if (tower.length > 0) {
+            this.holdingDisk = tower.pop();
+            this.steps++;
+            this.updateDisplay();
+            this.addToHistory('Picked up disk ' + this.holdingDisk + ' from tower ' + (this.selectedTower + 1));
+        } else {
+            this.addToHistory('No disk to pick up from tower ' + (this.selectedTower + 1));
+        }
+    }
+
+    putDownDisk() {
+        if (this.gameWon || this.holdingDisk === null) return;
+        
+        const tower = this.towers[this.selectedTower];
+        if (tower.length === 0 || tower[tower.length - 1] > this.holdingDisk) {
+            tower.push(this.holdingDisk);
+            this.holdingDisk = null;
+            this.updateDisplay();
+            this.addToHistory('Placed disk on tower ' + (this.selectedTower + 1));
+            
+            // Check for win
+            if (this.towers[2].length === this.disks) {
+                this.gameWon = true;
+                this.addToHistory('🎉 Congratulations! You solved the puzzle in ' + this.steps + ' steps!');
+                this.saveScore();
+            }
+        } else {
+            this.addToHistory('Cannot place disk - larger disk on tower');
+            // Return disk to original position
+            this.towers[this.selectedTower].push(this.holdingDisk);
+            this.holdingDisk = null;
+            this.updateDisplay();
+        }
+    }
+
+    changeDifficulty(change) {
+        this.disks += change;
+        if (this.disks < 1) this.disks = 1;
+        if (this.disks > 6) this.disks = 6;
+        this.init();
+    }
+
+    updateDisplay() {
+        this.drawGame();
+        document.getElementById('stepsCount').textContent = this.steps;
+        document.getElementById('disksCount').textContent = this.disks;
+        
+        const minSteps = Math.pow(2, this.disks) - 1;
+        document.getElementById('minSteps').textContent = minSteps;
+        
+        if (this.steps > 0) {
+            const efficiency = Math.round((minSteps / Math.max(this.steps, minSteps)) * 100);
+            document.getElementById('efficiency').textContent = efficiency + '%';
+        } else {
+            document.getElementById('efficiency').textContent = '0%';
+        }
+    }
+
+    drawGame() {
+        const canvas = document.getElementById('hanoiCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw towers
+        const towerWidth = 20;
+        const towerHeight = 200;
+        const baseY = 350;
+        const towerSpacing = 200;
+        
+        for (let i = 0; i < 3; i++) {
+            const x = 100 + i * towerSpacing;
+            
+            // Draw tower base
+            ctx.fillStyle = '#6c757d';
+            ctx.fillRect(x - 50, baseY, 100, 20);
+            
+            // Draw tower pole
+            ctx.fillStyle = '#495057';
+            ctx.fillRect(x - towerWidth/2, baseY - towerHeight, towerWidth, towerHeight);
+            
+            // Draw tower label
+            ctx.fillStyle = '#000';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tower ' + (i + 1), x, baseY + 40);
+            
+            // Highlight selected tower
+            if (i === this.selectedTower) {
+                ctx.strokeStyle = '#007bff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x - 60, baseY - towerHeight - 10, 120, towerHeight + 30);
+            }
+            
+            // Draw disks on tower
+            const tower = this.towers[i];
+            for (let j = 0; j < tower.length; j++) {
+                const diskSize = tower[j];
+                const diskWidth = 20 + diskSize * 20;
+                const diskY = baseY - (j + 1) * 25;
+                
+                // Disk color based on size
+                const colors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#007bff', '#6f42c1'];
+                ctx.fillStyle = colors[diskSize - 1] || '#6c757d';
+                
+                ctx.fillRect(x - diskWidth/2, diskY, diskWidth, 20);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x - diskWidth/2, diskY, diskWidth, 20);
+                
+                // Disk number
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(diskSize, x, diskY + 13);
+            }
+        }
+        
+        // Draw held disk
+        if (this.holdingDisk !== null) {
+            const diskSize = this.holdingDisk;
+            const diskWidth = 20 + diskSize * 20;
+            const x = 100 + this.selectedTower * towerSpacing;
+            const diskY = 100; // Position at top
+            
+            const colors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#007bff', '#6f42c1'];
+            ctx.fillStyle = colors[diskSize - 1] || '#6c757d';
+            
+            ctx.fillRect(x - diskWidth/2, diskY, diskWidth, 20);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - diskWidth/2, diskY, diskWidth, 20);
+            
+            // Disk number
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(diskSize, x, diskY + 13);
+            
+            // Holding indicator
+            ctx.fillStyle = '#007bff';
+            ctx.font = '14px Arial';
+            ctx.fillText('Holding Disk ' + diskSize, x, diskY - 10);
+        }
+        
+        // Draw game status
+        ctx.fillStyle = '#000';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Steps: ' + this.steps, 20, 30);
+        
+        if (this.gameWon) {
+            ctx.fillStyle = '#28a745';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎉 Puzzle Solved! 🎉', canvas.width / 2, 50);
+        }
+    }
+
+    addToHistory(message) {
+        const historyElement = document.getElementById('gameHistory');
+        const timestamp = new Date().toLocaleTimeString();
+        
+        const entry = document.createElement('div');
+        entry.className = 'log-entry small';
+        entry.textContent = `[${timestamp}] ${message}`;
+        
+        historyElement.insertBefore(entry, historyElement.firstChild);
+        
+        // Keep only last 10 entries
+        while (historyElement.children.length > 10) {
+            historyElement.removeChild(historyElement.lastChild);
+        }
+    }
+
+    saveScore() {
+        fetch('/save_tower_score', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                score: this.steps,
+                level: this.disks
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.addToHistory('Score saved to your profile!');
+            }
+        })
+        .catch(error => console.error('Error saving score:', error));
+    }
+
+    showHint() {
+        const minSteps = Math.pow(2, this.disks) - 1;
+        this.addToHistory(`💡 Hint: Minimum steps for ${this.disks} disks is ${minSteps}`);
+        this.addToHistory('💡 Try moving smaller disks first and work systematically!');
+    }
+}
+
+// Global game instance
+let hanoiGame;
+
+// Initialize game
+function initGame() {
+    hanoiGame = new TowerOfHanoi();
+}
+
+// Game control functions
+function moveCursor(direction) {
+    if (direction === 'left') {
+        hanoiGame.moveLeft();
+    } else {
+        hanoiGame.moveRight();
+    }
+}
+
+function pickUpDisk() {
+    hanoiGame.pickUpDisk();
+}
+
+function putDownDisk() {
+    hanoiGame.putDownDisk();
+}
+
+function resetGame() {
+    hanoiGame.init();
+}
+
+function changeDifficulty(change) {
+    hanoiGame.changeDifficulty(change);
+}
+
+function showHint() {
+    hanoiGame.showHint();
+}
+
+// Keyboard controls
+document.addEventListener('keydown', function(event) {
+    if (!hanoiGame) return;
+    
+    switch(event.key) {
+        case 'ArrowLeft':
+            moveCursor('left');
+            break;
+        case 'ArrowRight':
+            moveCursor('right');
+            break;
+        case 'ArrowUp':
+            pickUpDisk();
+            break;
+        case 'ArrowDown':
+            putDownDisk();
+            break;
+        case 'r':
+        case 'R':
+            resetGame();
+            break;
+        case 'h':
+        case 'H':
+            showHint();
+            break;
+    }
+});
+
+// Initialize game when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initGame();
+});
+</script>
+
+<style>
+.game-canvas {
+    border: 3px solid #dee2e6;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+#hanoiCanvas {
+    border: 2px solid #495057;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 10px;
+}
+
+.stat-item h6 {
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.game-history {
+    font-family: 'Courier New', monospace;
+}
+
+.log-entry {
+    padding: 3px 0;
+    border-bottom: 1px solid #f8f9fa;
+    font-size: 0.8rem;
+}
+
+.benefit-item {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border-left: 4px solid #007bff;
+}
+
+.game-controls .btn {
+    margin: 0 2px;
+}
+
+.alert ul {
+    margin-bottom: 0;
+}
+
+.alert li {
+    padding: 2px 0;
+}
+
+.btn-group {
+    flex-wrap: wrap;
+}
+
+.btn-group .btn {
+    margin-bottom: 5px;
+}
+
+@media (max-width: 768px) {
+    #hanoiCanvas {
+        width: 100%;
+        height: auto;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,259 @@
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.btn {
+    border-radius: 25px;
+    padding: 10px 25px;
+}
+/* Additional styles for new modules */
+
+/* Emotion detection styles */
+.emotion-bar .progress-bar {
+    transition: width 0.5s ease;
+}
+
+.emotion-happy { background-color: #28a745; }
+.emotion-neutral { background-color: #6c757d; }
+.emotion-sad { background-color: #007bff; }
+.emotion-angry { background-color: #dc3545; }
+.emotion-surprised { background-color: #ffc107; }
+.emotion-fearful { background-color: #17a2b8; }
+.emotion-disgusted { background-color: #343a40; }
+
+/* Shape game styles */
+.shape {
+    display: inline-block;
+    margin: 10px;
+}
+
+.shape.circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #dc3545;
+}
+
+.shape.square {
+    width: 60px;
+    height: 60px;
+    background-color: #28a745;
+}
+
+.shape.triangle {
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 60px solid #007bff;
+    background-color: transparent;
+}
+
+.shape.rectangle {
+    width: 80px;
+    height: 40px;
+    background-color: #ffc107;
+}
+
+.shape.large {
+    transform: scale(1.5);
+}
+
+.bin {
+    padding: 20px;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.bin:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+}
+
+/* Tower of Hanoi styles */
+.game-canvas {
+    border: 3px solid #dee2e6;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 400px;
+}
+
+/* Status indicators */
+.status-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 5px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.status-on {
+    background-color: #28a745;
+    border-color: #28a745;
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.status-off {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Activity logs */
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.bounce {
+    animation: bounce 2s infinite;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .display-1 { font-size: 2.5rem; }
+    .display-4 { font-size: 2rem; }
+    .btn-lg { padding: 0.5rem 1rem; font-size: 1rem; }
+}
+
+/* Print styles */
+@media print {
+    .navbar, .btn, .game-controls { display: none !important; }
+    .card { border: 1px solid #000 !important; }
+}
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.module-card {
+    height: 100%;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+footer {
+    margin-top: auto;
+}
+
+/* Custom colors for different modules */
+.bg-gesture { background-color: #ff6b6b; }
+.bg-speech { background-color: #48dbfb; }
+.bg-eye-blink { background-color: #feca57; }
+.bg-autism { background-color: #1dd1a1; }
+
+/* Animation for interactive elements */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Camera feed styling */
+.camera-feed {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Button styles for children */
+.child-btn {
+    font-size: 1.2rem;
+    padding: 15px 30px;
+    margin: 10px;
+    border-radius: 50px;
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.child-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* Speech bubble for feedback */
+.speech-bubble {
+    position: relative;
+    background: #00b894;
+    border-radius: 20px;
+    padding: 15px 20px;
+    color: white;
+    margin: 10px 0;
+}
+
+.speech-bubble:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border: 20px solid transparent;
+    border-top-color: #00b894;
+    border-bottom: 0;
+    border-left: 0;
+    margin-left: -10px;
+    margin-bottom: -20px;
+}

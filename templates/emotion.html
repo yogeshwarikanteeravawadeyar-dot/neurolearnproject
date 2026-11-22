@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-smile me-2"></i>Emotion Recognition</h4>
+            </div>
+            <div class="card-body">
+                <!-- Model Status Alert -->
+                <div class="alert alert-warning" id="modelAlert" 
+                     style="display: {% if not emotion_status.model_loaded or not emotion_status.face_detector_loaded %}block{% else %}none{% endif %};">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Model Status:</strong> 
+                    <span id="modelStatusText">
+                        {% if not emotion_status.model_loaded %}Emotion model not loaded{% endif %}
+                        {% if not emotion_status.model_loaded and not emotion_status.face_detector_loaded %} and {% endif %}
+                        {% if not emotion_status.face_detector_loaded %}Face detector not loaded{% endif %}
+                    </span>
+                    <br>
+                    <small>Make sure 'model/emotion_model.json', 'model/emotion_model.h5', and 'haarcascades/haarcascade_frontalface_default.xml' exist.</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="camera-feed mb-4">
+                            <div class="text-center bg-dark text-light p-4 rounded">
+                                <h5>Camera Status</h5>
+                                <div class="status-indicator mb-3">
+                                    <div class="status-circle {% if emotion_status.is_active %}status-on{% else %}status-off{% endif %}" 
+                                         id="statusCircle"></div>
+                                    <p class="mt-2">Status: 
+                                        <span id="statusText">
+                                            {% if emotion_status.is_active %}ACTIVE{% else %}INACTIVE{% endif %}
+                                        </span>
+                                    </p>
+                                </div>
+                                
+                                <div class="current-emotion text-center mb-3">
+                                    <div id="currentEmotion" class="display-4 text-warning">
+                                        {{ emotion_status.current_emotion }}
+                                    </div>
+                                    <p class="text-muted">Current Emotion</p>
+                                </div>
+                                
+                                <div class="btn-group-vertical w-100">
+                                    <button class="btn btn-success mb-2" id="startBtn" 
+                                            {% if emotion_status.is_active or not emotion_status.model_loaded or not emotion_status.face_detector_loaded %}disabled{% endif %}>
+                                        <i class="fas fa-play me-2"></i>Start Detection
+                                    </button>
+                                    <button class="btn btn-danger mb-2" id="stopBtn" 
+                                            {% if not emotion_status.is_active %}disabled{% endif %}>
+                                        <i class="fas fa-stop me-2"></i>Stop Detection
+                                    </button>
+                                    <button class="btn btn-warning" id="resetBtn">
+                                        <i class="fas fa-redo me-2"></i>Reset Statistics
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-3 p-2 bg-light rounded">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Camera window will open separately. Press 'Q' to close it.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="emotion-stats">
+                            <h5>Emotion Statistics</h5>
+                            <div class="stats-container">
+                                {% for emotion in ['Happy', 'Neutral', 'Sad', 'Angry', 'Surprised', 'Fearful', 'Disgusted'] %}
+                                <div class="emotion-bar mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="emotion-label">{{ emotion }}</span>
+                                        <span class="emotion-percent" id="{{ emotion }}Percent">
+                                            {{ emotion_status.percentages.get(emotion, 0)|round(1) }}%
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div id="{{ emotion }}Bar" class="progress-bar emotion-{{ emotion.lower() }}" 
+                                             role="progressbar" 
+                                             style="width: {{ emotion_status.percentages.get(emotion, 0) }}%">
+                                            <span id="{{ emotion }}Count" class="emotion-count">
+                                                {{ emotion_status.stats.get(emotion, 0) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="total-detections text-center mt-3 p-2 bg-light rounded">
+                                <h6>Total Detections</h6>
+                                <div id="totalDetections" class="h4 text-primary">
+                                    {{ emotion_status.stats.values()|sum }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="emotion-info mt-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>How it works:</strong> This uses the exact same code as the standalone emotion detection. 
+                        It loads the emotion model and face detector cascade file to detect emotions in real-time.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Emotion Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="emotionChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>System Requirements</h5>
+            </div>
+            <div class="card-body">
+                <h6>Required Files:</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-1">
+                        <i class="fas fa-file-code me-2"></i>
+                        <code>model/emotion_model.json</code>
+                        <span id="modelJsonStatus" class="badge bg-{% if emotion_status.model_loaded %}success{% else %}danger{% endif %} ms-2">
+                            {% if emotion_status.model_loaded %}✓{% else %}✗{% endif %}
+                        </span>
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-file me-2"></i>
+                        <code>model/emotion_model.h5</code>
+                        <span id="modelH5Status" class="badge bg-{% if emotion_status.model_loaded %}success{% else %}danger{% endif %} ms-2">
+                            {% if emotion_status.model_loaded %}✓{% else %}✗{% endif %}
+                        </span>
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-file me-2"></i>
+                        <code>haarcascades/haarcascade_frontalface_default.xml</code>
+                        <span id="cascadeStatus" class="badge bg-{% if emotion_status.face_detector_loaded %}success{% else %}danger{% endif %} ms-2">
+                            {% if emotion_status.face_detector_loaded %}✓{% else %}✗{% endif %}
+                        </span>
+                    </li>
+                </ul>
+                
+                <div class="mt-3 p-2 bg-light rounded">
+                    <h6>Current Status:</h6>
+                    <div id="detectionMode" class="fw-bold 
+                        {% if emotion_status.model_loaded and emotion_status.face_detector_loaded %}text-success
+                        {% else %}text-danger{% endif %}">
+                        {% if emotion_status.model_loaded and emotion_status.face_detector_loaded %}
+                            Ready for Detection
+                        {% else %}
+                            Models Missing
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Real-time Emotion Log</h5>
+            </div>
+            <div class="card-body">
+                <div id="emotionLog" class="emotion-log" style="max-height: 200px; overflow-y: auto;">
+                    <div class="log-entry text-muted">
+                        {% if emotion_status.model_loaded and emotion_status.face_detector_loaded %}
+                            Ready to detect emotions. Start detection to see live updates.
+                        {% else %}
+                            Models not loaded. Please check the required files above.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let emotionLog = [];
+let emotionChart;
+
+function updateEmotionStatus() {
+    fetch('/emotion_status')
+        .then(response => response.json())
+        .then(data => {
+            // Update model status alert
+            const modelAlert = document.getElementById('modelAlert');
+            const modelStatusText = document.getElementById('modelStatusText');
+            const detectionMode = document.getElementById('detectionMode');
+            const startBtn = document.getElementById('startBtn');
+            
+            if (!data.model_loaded || !data.face_detector_loaded) {
+                modelAlert.style.display = 'block';
+                let statusText = '';
+                if (!data.model_loaded) statusText += 'Emotion model not loaded';
+                if (!data.model_loaded && !data.face_detector_loaded) statusText += ' and ';
+                if (!data.face_detector_loaded) statusText += 'Face detector not loaded';
+                modelStatusText.textContent = statusText;
+                
+                detectionMode.textContent = 'Models Missing';
+                detectionMode.className = 'fw-bold text-danger';
+                startBtn.disabled = true;
+            } else {
+                modelAlert.style.display = 'none';
+                detectionMode.textContent = data.is_running ? 'Detection Active' : 'Ready for Detection';
+                detectionMode.className = `fw-bold ${data.is_running ? 'text-success' : 'text-primary'}`;
+                startBtn.disabled = data.is_running;
+            }
+            
+            // Update file status badges
+            document.getElementById('modelJsonStatus').className = `badge bg-${data.model_loaded ? 'success' : 'danger'} ms-2`;
+            document.getElementById('modelJsonStatus').textContent = data.model_loaded ? '✓' : '✗';
+            document.getElementById('modelH5Status').className = `badge bg-${data.model_loaded ? 'success' : 'danger'} ms-2`;
+            document.getElementById('modelH5Status').textContent = data.model_loaded ? '✓' : '✗';
+            document.getElementById('cascadeStatus').className = `badge bg-${data.face_detector_loaded ? 'success' : 'danger'} ms-2`;
+            document.getElementById('cascadeStatus').textContent = data.face_detector_loaded ? '✓' : '✗';
+            
+            // Update status indicator
+            const statusCircle = document.getElementById('statusCircle');
+            const statusText = document.getElementById('statusText');
+            
+            if (data.is_running) {
+                statusCircle.className = 'status-circle status-on';
+                statusText.textContent = 'ACTIVE';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+            } else {
+                statusCircle.className = 'status-circle status-off';
+                statusText.textContent = 'INACTIVE';
+                document.getElementById('startBtn').disabled = !data.model_loaded || !data.face_detector_loaded;
+                document.getElementById('stopBtn').disabled = true;
+            }
+            
+            // Update current emotion with animation
+            const currentEmotionElement = document.getElementById('currentEmotion');
+            if (currentEmotionElement.textContent !== data.current_emotion) {
+                currentEmotionElement.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    currentEmotionElement.style.transform = 'scale(1)';
+                }, 300);
+            }
+            currentEmotionElement.textContent = data.current_emotion;
+            currentEmotionElement.className = `display-4 text-${getEmotionColor(data.current_emotion)}`;
+            
+            // Update statistics
+            if (data.percentages) {
+                for (const [emotion, percentage] of Object.entries(data.percentages)) {
+                    const percentElement = document.getElementById(emotion + 'Percent');
+                    const barElement = document.getElementById(emotion + 'Bar');
+                    const countElement = document.getElementById(emotion + 'Count');
+                    
+                    if (percentElement) {
+                        percentElement.textContent = percentage.toFixed(1) + '%';
+                    }
+                    if (barElement) {
+                        barElement.style.width = percentage + '%';
+                    }
+                    if (countElement && data.stats) {
+                        countElement.textContent = data.stats[emotion] || 0;
+                    }
+                }
+            }
+            
+            // Update total detections
+            if (data.stats) {
+                const total = Object.values(data.stats).reduce((a, b) => a + b, 0);
+                document.getElementById('totalDetections').textContent = total;
+            }
+            
+            // Update emotion chart
+            updateEmotionChart(data.stats, data.percentages);
+            
+        })
+        .catch(error => {
+            console.error('Error fetching emotion status:', error);
+            document.getElementById('detectionMode').textContent = 'Connection Error';
+            document.getElementById('detectionMode').className = 'fw-bold text-danger';
+        });
+}
+
+function getEmotionColor(emotion) {
+    const colors = {
+        'Happy': 'success',
+        'Neutral': 'secondary',
+        'Sad': 'primary',
+        'Angry': 'danger',
+        'Surprised': 'warning',
+        'Fearful': 'info',
+        'Disgusted': 'dark'
+    };
+    return colors[emotion] || 'secondary';
+}
+
+function updateEmotionChart(stats, percentages) {
+    const ctx = document.getElementById('emotionChart').getContext('2d');
+    
+    if (emotionChart) {
+        emotionChart.destroy();
+    }
+    
+    const emotions = Object.keys(percentages || {});
+    const data = emotions.map(emotion => percentages[emotion]);
+    const backgroundColors = emotions.map(emotion => {
+        const colors = {
+            'Happy': '#28a745',
+            'Neutral': '#6c757d',
+            'Sad': '#007bff',
+            'Angry': '#dc3545',
+            'Surprised': '#ffc107',
+            'Fearful': '#17a2b8',
+            'Disgusted': '#343a40'
+        };
+        return colors[emotion] || '#6c757d';
+    });
+    
+    emotionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: emotions,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Event listeners
+document.getElementById('startBtn').addEventListener('click', function() {
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
+    window.location.href = '/start_emotion';
+});
+
+document.getElementById('stopBtn').addEventListener('click', function() {
+    window.location.href = '/stop_emotion';
+});
+
+document.getElementById('resetBtn').addEventListener('click', function() {
+    if (confirm('Are you sure you want to reset all emotion statistics?')) {
+        window.location.href = '/reset_emotion_stats';
+    }
+});
+
+// Update status every second
+setInterval(updateEmotionStatus, 1000);
+
+// Initial update
+updateEmotionStatus();
+</script>
+
+<style>
+.status-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 5px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.status-on {
+    background-color: #28a745;
+    border-color: #28a745;
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.status-off {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.emotion-bar .progress-bar {
+    transition: width 0.5s ease;
+}
+
+.emotion-happy { background-color: #28a745; }
+.emotion-neutral { background-color: #6c757d; }
+.emotion-sad { background-color: #007bff; }
+.emotion-angry { background-color: #dc3545; }
+.emotion-surprised { background-color: #ffc107; }
+.emotion-fearful { background-color: #17a2b8; }
+.emotion-disgusted { background-color: #343a40; }
+
+.emotion-count {
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+    font-size: 0.8rem;
+}
+
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.emotion-label {
+    font-weight: 600;
+    min-width: 80px;
+    font-size: 0.9rem;
+}
+
+#currentEmotion {
+    transition: all 0.3s ease;
+}
+
+code {
+    font-size: 0.8rem;
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}

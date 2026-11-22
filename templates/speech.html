@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-microphone me-2"></i>Speech Practice</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="speech-bubble" id="currentSentence">
+                        <h4>Hello! Welcome to NeuroLearn.</h4>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="sentenceSelect" class="form-label">Select Practice Sentence:</label>
+                    <select class="form-select" id="sentenceSelect">
+                        <option value="Hello! Welcome to NeuroLearn">Basic Greeting</option>
+                        <option value="The sun is shining brightly today">Weather</option>
+                        <option value="I like to play with colorful toys">Preferences</option>
+                        <option value="My favorite animal is a fluffy rabbit">Animals</option>
+                        <option value="We are learning to speak clearly">Learning</option>
+                        <option value="The quick brown fox jumps over the lazy dog">Classic Example</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-lg" id="playSentence">
+                        <i class="fas fa-volume-up me-2"></i>Play Sentence
+                    </button>
+                    <button class="btn btn-success btn-lg" id="startRecording">
+                        <i class="fas fa-microphone me-2"></i>Start Recording (5 seconds)
+                    </button>
+                </div>
+                
+                <div class="mt-4" id="feedbackArea">
+                    <!-- Feedback will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Progress Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 id="correctCount">0</h3>
+                        <p class="text-muted">Correct</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 id="attemptCount">0</h3>
+                        <p class="text-muted">Attempts</p>
+                    </div>
+                </div>
+                <div class="progress mb-2">
+                    <div class="progress-bar bg-success" id="accuracyBar" style="width: 0%">0%</div>
+                </div>
+                <p class="text-center mb-0">Accuracy</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Tips for Clear Speech</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Speak slowly and clearly
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Pronounce each word completely
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Take deep breaths before speaking
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Practice difficult words separately
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Have fun and be patient!
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Practice Sessions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Sentence</th>
+                                <th>Result</th>
+                                <th>Accuracy</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionHistory">
+                            <!-- Session history will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let correctCount = 0;
+    let attemptCount = 0;
+    let sessionHistory = [];
+    
+    document.getElementById('sentenceSelect').addEventListener('change', function() {
+        document.getElementById('currentSentence').innerHTML = `<h4>${this.value}</h4>`;
+    });
+    
+    document.getElementById('playSentence').addEventListener('click', function() {
+        const sentence = document.getElementById('sentenceSelect').value;
+        document.getElementById('currentSentence').innerHTML = `<h4>${sentence}</h4>`;
+        
+        // Play the sentence using TTS
+        fetch('/textspeech', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text: sentence})
+        });
+    });
+    
+    document.getElementById('startRecording').addEventListener('click', function() {
+        const sentence = document.getElementById('sentenceSelect').value;
+        const button = this;
+        
+        // Disable button during recording
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-circle me-2"></i>Recording...';
+        
+        // Show countdown
+        let countdown = 5;
+        const countdownInterval = setInterval(() => {
+            button.innerHTML = `<i class="fas fa-circle me-2"></i>Recording... ${countdown}`;
+            countdown--;
+            
+            if (countdown < 0) {
+                clearInterval(countdownInterval);
+                
+                // Send recording for evaluation
+                fetch('/textspeech', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: sentence})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    attemptCount++;
+                    
+                    if (data.success) {
+                        correctCount++;
+                        showFeedback('🎉 Excellent! Perfect match!', 'success');
+                    } else {
+                        showFeedback('💪 Good try! Practice makes perfect.', 'warning');
+                    }
+                    
+                    updateStats();
+                    addSessionHistory(sentence, data.success);
+                    
+                    // Re-enable button
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-microphone me-2"></i>Start Recording (5 seconds)';
+                })
+                .catch(error => {
+                    showFeedback('❌ Error occurred. Please try again.', 'danger');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-microphone me-2"></i>Start Recording (5 seconds)';
+                });
+            }
+        }, 1000);
+    });
+    
+    function showFeedback(message, type) {
+        const feedbackArea = document.getElementById('feedbackArea');
+        feedbackArea.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+    
+    function updateStats() {
+        document.getElementById('correctCount').textContent = correctCount;
+        document.getElementById('attemptCount').textContent = attemptCount;
+        
+        const accuracy = attemptCount > 0 ? Math.round((correctCount / attemptCount) * 100) : 0;
+        document.getElementById('accuracyBar').style.width = `${accuracy}%`;
+        document.getElementById('accuracyBar').textContent = `${accuracy}%`;
+    }
+    
+    function addSessionHistory(sentence, success) {
+        const session = {
+            date: new Date().toLocaleString(),
+            sentence: sentence,
+            result: success ? 'Correct' : 'Needs Practice',
+            accuracy: success ? '100%' : '0%'
+        };
+        
+        sessionHistory.unshift(session);
+        if (sessionHistory.length > 5) sessionHistory.pop();
+        
+        updateSessionHistory();
+    }
+    
+    function updateSessionHistory() {
+        const tbody = document.getElementById('sessionHistory');
+        tbody.innerHTML = sessionHistory.map(session => `
+            <tr>
+                <td>${session.date}</td>
+                <td>${session.sentence.substring(0, 30)}...</td>
+                <td><span class="badge bg-${session.result === 'Correct' ? 'success' : 'warning'}">${session.result}</span></td>
+                <td>${session.accuracy}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Initialize
+    updateStats();
+</script>
+{% endblock %}
